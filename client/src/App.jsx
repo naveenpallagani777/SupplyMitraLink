@@ -1,16 +1,136 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
+import ScrollToTop from "./components/ScrollToTop";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import SupplierDashboard from "./components/SupplierDashboard";
+import VendorDashboard from "./components/VendorDashboard";
+import SupplierItems from "./components/SupplierItems";
+import PriceWarnings from "./components/PriceWarnings";
+import Feedback from "./components/Feedback";
+import Checkout from "./components/Checkout";
+import OrderConfirmation from "./components/OrderConfirmation";
+import SupplierProfile from "./components/SupplierProfile";
+import VendorProfile from "./components/VendorProfile";
+import SupplierPublicView from "./components/SupplierPublicView";
+import "./i18n";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <h1 className='text-amber-400'>Vite + React</h1>
-    </>
-  )
+    <AuthProvider>
+      <Router>
+        <ScrollToTop />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } />
+          <Route path="/signup" element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          } />
+          
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard/supplier"
+            element={
+              <ProtectedRoute role="supplier">
+                <SupplierDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/vendor"
+            element={
+              <ProtectedRoute role="vendor">
+                <VendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supplier/items"
+            element={
+              <ProtectedRoute role="supplier">
+                <SupplierItems />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/alerts/price-warnings"
+            element={
+              <ProtectedRoute role="supplier">
+                <PriceWarnings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feedback"
+            element={
+              <ProtectedRoute role="vendor">
+                <Feedback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute role="vendor">
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order-confirmation"
+            element={
+              <ProtectedRoute role="vendor">
+                <OrderConfirmation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendors/:supplierName/public"
+            element={
+              <ProtectedRoute>
+                <SupplierPublicView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supplier/:supplierName"
+            element={
+              <ProtectedRoute role="vendor">
+                <SupplierProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/vendor"
+            element={
+              <ProtectedRoute role="vendor">
+                <VendorProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/supplier"
+            element={
+              <ProtectedRoute role="supplier">
+                <SupplierProfile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
-
-export default App
