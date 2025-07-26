@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../common/LanguageSwitcher";
+import logo from "../../assets/logo.png";
 
 const VendorHeader = ({ cart, showCart, setShowCart }) => {
   const { user, logout } = useAuth();
@@ -34,7 +35,7 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
               margin: 0,
             }}
           >
-            <div className="flex-shrink-0">
+            {/* <div className="flex-shrink-0">
               <div className="h-8 w-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <svg
                   className="h-5 w-5 text-white"
@@ -56,7 +57,8 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
                 {t("brand.name")}
               </h1>
               <p className="text-xs text-gray-500">{t("brand.tagline")}</p>
-            </div>
+            </div> */}
+            <img src={logo} alt="logo" className="h-10" />
           </button>
 
           {/* Navigation */}

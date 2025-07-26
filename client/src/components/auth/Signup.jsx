@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import logo from "../../assets/logo.png";
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -69,8 +70,8 @@ const Signup = () => {
       <div className="max-w-md w-full">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4">
-            <svg
+          <div className="mx-auto h-16 bg-gradient-to-r flex items-center justify-center mb-4">
+            {/* <svg
               className="h-8 w-8 text-white"
               fill="none"
               stroke="currentColor"
@@ -82,12 +83,13 @@ const Signup = () => {
                 strokeWidth={2}
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
-            </svg>
+            </svg> */}
+            <img src={logo} alt="logo" className="h-14" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          {/* <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             {t("brand.name")}
           </h1>
-          <p className="mt-2 text-gray-600">{t("brand.tagline")}</p>
+          <p className="mt-2 text-gray-600">{t("brand.tagline")}</p> */}
         </div>
 
         {/* Signup Card */}
