@@ -22,7 +22,12 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-4">
+          <button
+            className="flex items-center space-x-4 focus:outline-none"
+            onClick={() => navigate('/dashboard/vendor')}
+            aria-label="Go to Vendor Dashboard"
+            style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
+          >
             <div className="flex-shrink-0">
               <div className="h-8 w-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,7 +41,7 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
               </h1>
               <p className="text-xs text-gray-500">{t('brand.tagline')}</p>
             </div>
-          </div>
+          </button>
 
           {/* Navigation */}
                            <nav className="hidden md:flex items-center space-x-8">
@@ -69,7 +74,9 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
                 className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
                 </svg>
                 {cart && cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">

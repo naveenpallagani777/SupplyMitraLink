@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import VendorHeader from './VendorHeader';
 import VendorMap from './VendorMap';
+import { useVendorStore } from '../stores/useVendorStore';
 
 // --- SupplierProfilePreview Component ---
 const SupplierProfilePreview = ({ supplier, products, onClose }) => {
@@ -212,11 +213,48 @@ const VendorDashboard = () => {
   const [showCart, setShowCart] = useState(false);
   const navigate = useNavigate();
 
-  // Mock data for dashboard stats
-  const stats = [
+  // Use vendor store
+  const {
+    profile,
+    suppliers,
+    products,
+    stats,
+    loading,
+    error,
+    fetchProfile,
+    fetchSuppliers,
+    fetchProducts,
+    fetchStats,
+    getSupplierById,
+    getProductsBySupplier,
+    getProductsByCategory,
+    getInStockProducts,
+    getLowStockProducts
+  } = useVendorStore();
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile(user.id, user.token);
+      fetchSuppliers({}, user.token);
+      fetchProducts({}, user.token);
+      fetchStats(user.id, user.token);
+    }
+  }, [user, fetchProfile, fetchSuppliers, fetchProducts, fetchStats]);
+
+  // Filter products based on search and category
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.supplier.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Dashboard stats from store
+  const dashboardStats = stats ? [
     {
-      title: t('vendor.totalPurchases'),
-      value: '₹12,500',
+      title: t('vendorDashboard.totalPurchases'),
+      value: `₹${stats.totalSpent?.toLocaleString() || '0'}`,
       change: '+15.2%',
       changeType: 'positive',
       icon: (
@@ -226,8 +264,8 @@ const VendorDashboard = () => {
       )
     },
     {
-      title: t('vendor.itemsPurchased'),
-      value: '89',
+      title: t('vendorDashboard.itemsPurchased'),
+      value: stats.totalOrders?.toString() || '0',
       change: '+8.7%',
       changeType: 'positive',
       icon: (
@@ -237,8 +275,8 @@ const VendorDashboard = () => {
       )
     },
     {
-      title: t('vendor.suppliersConnected'),
-      value: '8',
+      title: t('vendorDashboard.suppliersConnected'),
+      value: stats.activeSuppliers?.toString() || '0',
       change: '+2',
       changeType: 'positive',
       icon: (
@@ -248,8 +286,8 @@ const VendorDashboard = () => {
       )
     },
     {
-      title: t('vendor.monthlySpending'),
-      value: '₹2,800',
+      title: t('vendorDashboard.monthlySpending'),
+      value: `₹${stats.averageOrderValue?.toLocaleString() || '0'}`,
       change: '+12.3%',
       changeType: 'positive',
       icon: (
@@ -258,125 +296,23 @@ const VendorDashboard = () => {
         </svg>
       )
     }
-  ];
+  ] : [];
 
-  // Mock spending data for chart
-  const monthlySpending = [
-    { month: 'Jan', amount: 1200 },
-    { month: 'Feb', amount: 1800 },
-    { month: 'Mar', amount: 1500 },
-    { month: 'Apr', amount: 2200 },
-    { month: 'May', amount: 1900 },
-    { month: 'Jun', amount: 2500 },
-    { month: 'Jul', amount: 2800 }
-  ];
-
-  // Mock products data
-  const products = [
-    {
-      id: 1,
-      name: 'Fresh Tomatoes',
-      price: 40,
-      unit: 'kg',
-      category: 'vegetables',
-      supplier: {
-        name: 'Fresh Farm Supplies',
-        rating: 4.5,
-        location: '2.3 km away',
-        quality: 4.8,
-        speed: 4.2,
-        reliability: 4.6
-      }
-    },
-    {
-      id: 2,
-      name: 'Organic Onions',
-      price: 25,
-      unit: 'kg',
-      category: 'vegetables',
-      supplier: {
-        name: 'Green Valley Farms',
-        rating: 4.2,
-        location: '3.1 km away',
-        quality: 4.5,
-        speed: 4.0,
-        reliability: 4.3
-      }
-    },
-    {
-      id: 3,
-      name: 'Fresh Milk',
-      price: 60,
-      unit: 'liter',
-      category: 'dairy',
-      supplier: {
-        name: 'Dairy Delights',
-        rating: 4.8,
-        location: '1.8 km away',
-        quality: 4.9,
-        speed: 4.7,
-        reliability: 4.8
-      }
-    },
-    {
-      id: 4,
-      name: 'Sweet Bananas',
-      price: 60,
-      unit: 'dozen',
-      category: 'fruits',
-      supplier: {
-        name: 'Fruit Paradise',
-        rating: 4.3,
-        location: '4.5 km away',
-        quality: 4.4,
-        speed: 4.1,
-        reliability: 4.2
-      }
-    },
-    {
-      id: 5,
-      name: 'Basmati Rice',
-      price: 80,
-      unit: 'kg',
-      category: 'grains',
-      supplier: {
-        name: 'Grain Masters',
-        rating: 4.6,
-        location: '5.2 km away',
-        quality: 4.7,
-        speed: 4.4,
-        reliability: 4.5
-      }
-    },
-    {
-      id: 6,
-      name: 'Fresh Eggs',
-      price: 120,
-      unit: 'dozen',
-      category: 'dairy',
-      supplier: {
-        name: 'Farm Fresh Eggs',
-        rating: 4.4,
-        location: '2.8 km away',
-        quality: 4.5,
-        speed: 4.3,
-        reliability: 4.4
-      }
-    }
-  ];
-
+  // Categories from products
   const categories = [
-    { id: 'all', name: t('vendor.allCategories'), icon: '🛒' },
-    { id: 'vegetables', name: t('supplier.vegetables'), icon: '🥬' },
-    { id: 'fruits', name: t('supplier.fruits'), icon: '🍎' },
-    { id: 'dairy', name: t('supplier.dairy'), icon: '🥛' },
-    { id: 'grains', name: t('supplier.grains'), icon: '🌾' }
+    { id: 'all', name: t('vendorDashboard.allCategories'), icon: '🛒' },
+    ...Array.from(new Set(products.map(p => p.category))).map(category => ({
+      id: category,
+      name: t(`supplier.${category}`),
+      icon: category === 'vegetables' ? '🥬' : category === 'fruits' ? '🍎' : category === 'dairy' ? '🥛' : '🌾'
+    }))
   ];
 
+  // Quick actions
   const quickActions = [
     {
-      title: t('vendor.searchProducts'),
-      description: t('vendor.findBestSuppliers'),
+      title: t('vendorDashboard.searchProducts'),
+      description: t('vendorDashboard.findBestSuppliers'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -386,19 +322,21 @@ const VendorDashboard = () => {
       color: 'bg-blue-500'
     },
     {
-      title: t('vendor.viewCart'),
-      description: t('vendor.manageOrders'),
+      title: t('vendorDashboard.viewCart'),
+      description: t('vendorDashboard.manageOrders'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
         </svg>
       ),
       action: () => setShowCart(true),
       color: 'bg-green-500'
     },
     {
-      title: t('vendor.supplierPerformance'),
-      description: t('vendor.ratingsAndReviews'),
+      title: t('vendorDashboard.supplierPerformance'),
+      description: t('vendorDashboard.ratingsAndReviews'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -409,7 +347,7 @@ const VendorDashboard = () => {
     },
     {
       title: t('common.feedback'),
-      description: t('vendor.shareExperience'),
+      description: t('vendorDashboard.shareExperience'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -420,13 +358,7 @@ const VendorDashboard = () => {
     }
   ];
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.supplier.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
+  // Cart functions
   const addToCart = (product, quantity) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
@@ -450,24 +382,36 @@ const VendorDashboard = () => {
     navigate('/checkout', { state: { cart } });
   };
 
-  // Dummy supplier data for preview
-  const getSupplierData = (name) => ({
-    name,
-    address: 'Farm Road, Bangalore Rural, Karnataka 562123',
-    phone: '+91 98765 12345',
-    email: 'supplier@freshfarm.com',
-    distance: 2.3,
-    rating: 4.5,
-    quality: 4.8,
-    speed: 4.2,
-    reliability: 4.6,
-  });
-  const getSupplierProducts = () => ([
-    { id: 1, name: 'Fresh Tomatoes', price: 40, unit: 'kg', status: 'in-stock' },
-    { id: 2, name: 'Organic Onions', price: 25, unit: 'kg', status: 'in-stock' },
-    { id: 3, name: 'Fresh Carrots', price: 30, unit: 'kg', status: 'low-stock' },
-    { id: 4, name: 'Organic Apples', price: 120, unit: 'dozen', status: 'out-of-stock' },
-  ]);
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -478,16 +422,16 @@ const VendorDashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            {t('common.welcome')}, {user?.name || 'Vendor'}! 👋
+            {t('common.welcome')}, {profile?.name || user?.name || 'Vendor'}! 👋
           </h2>
           <p className="text-gray-600">
-            {t('vendor.monthlySpendingOverview')}
+            {t('vendorDashboard.monthlySpendingOverview')}
           </p>
         </div>
 
         {/* Stats Cards - Responsive Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {dashboardStats.map((stat, index) => (
             <div key={index} className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-4 md:p-5">
                 <div className="flex items-center">
@@ -542,7 +486,7 @@ const VendorDashboard = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {t('vendor.searchProducts')} ({filteredProducts.length})
+              {t('vendorDashboard.searchProducts')} ({filteredProducts.length})
             </button>
             <button
               onClick={() => setActiveTab('performance')}
@@ -552,47 +496,35 @@ const VendorDashboard = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {t('vendor.supplierPerformance')}
+              {t('vendorDashboard.supplierPerformance')}
             </button>
-            <Link
-              to="/feedback"
-              className="whitespace-nowrap py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
-            >
-              {t('common.feedback')}
-            </Link>
           </nav>
         </div>
 
-        {/* Content based on active tab */}
+        {/* Tab Content */}
         {activeTab === 'overview' && (
-          <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Quick Actions */}
-            <div className="mb-8">
+            <div className="lg:col-span-1">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('vendor.quickActions')}
+                {t('vendorDashboard.quickActions')}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="space-y-3">
                 {quickActions.map((action, index) => (
                   <button
                     key={index}
                     onClick={action.action}
-                    className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 group text-left"
+                    className="w-full bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 text-left"
                   >
-                    <div className="p-4 md:p-6">
-                      <div className="flex items-center">
-                        <div className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                          <div className="text-white">
-                            {action.icon}
-                          </div>
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${action.color}`}>
+                        <div className="text-white">
+                          {action.icon}
                         </div>
-                        <div className="ml-3 md:ml-4">
-                          <h4 className="text-base md:text-lg font-medium text-gray-900 group-hover:text-green-600 transition-colors duration-200">
-                            {action.title}
-                          </h4>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {action.description}
-                          </p>
-                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{action.title}</h4>
+                        <p className="text-sm text-gray-500">{action.description}</p>
                       </div>
                     </div>
                   </button>
@@ -600,128 +532,86 @@ const VendorDashboard = () => {
               </div>
             </div>
 
-            {/* Map View Section */}
-            <div className="mb-8">
+            {/* Nearby Suppliers */}
+            <div className="lg:col-span-2">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('vendor.nearbySuppliers')}
+                {t('vendorDashboard.nearbySuppliers')}
               </h3>
-              <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-white rounded-lg shadow p-6">
                 <VendorMap products={products} />
               </div>
             </div>
-
-            {/* Monthly Spending Chart */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('vendor.monthlySpendingChart')}
-              </h3>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">{t('vendor.spendingTrend')}</h4>
-                  <span className="text-sm text-gray-500">{t('vendor.last7Months')}</span>
-                </div>
-                <div className="flex items-end space-x-2 h-32">
-                  {monthlySpending.map((item, index) => {
-                    const maxAmount = Math.max(...monthlySpending.map(m => m.amount));
-                    const height = (item.amount / maxAmount) * 100;
-                    return (
-                      <div key={index} className="flex-1 flex flex-col items-center group">
-                        <div className="relative">
-                          <div
-                            className="bg-gradient-to-t from-green-500 to-green-400 rounded-t w-full transition-all duration-200 group-hover:from-green-600 group-hover:to-green-500"
-                            style={{ height: `${height}%` }}
-                          />
-                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            ₹{item.amount}
-                          </div>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-2">{item.month}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
-        {/* Products Tab */}
         {activeTab === 'products' && (
-          <div className="space-y-6">
-            {/* Search and Filter */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('vendor.searchProducts')}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('vendor.searchPlaceholder')}
-                  </label>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('vendor.searchPlaceholder')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('vendor.category')}
-                  </label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.icon} {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {t('vendorDashboard.searchProducts')}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('vendorDashboard.searchPlaceholder')}
+                </label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('vendorDashboard.searchPlaceholder')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('vendorDashboard.category')}
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-200">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h4 className="text-lg font-medium text-gray-900">{product.name}</h4>
-                        <p className="text-sm text-gray-500">{product.supplier.name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">₹{product.price}</p>
-                        <p className="text-sm text-gray-500">per {product.unit}</p>
-                      </div>
+                <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-gray-900">{product.name}</h4>
+                      <span className="text-sm text-gray-500">{product.category}</span>
                     </div>
-                    
-                    <div className="flex items-center mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-2xl font-bold text-green-600">₹{product.price}</span>
+                      <span className="text-sm text-gray-500">per {product.unit}</span>
+                    </div>
+                    <div className="flex items-center mb-3">
                       <div className="flex items-center">
-                        <span className="text-yellow-400 text-sm">★</span>
-                        <span className="text-sm font-medium text-gray-900 ml-1">{product.supplier.rating}</span>
+                        <span className="text-yellow-400">★</span>
+                        <span className="ml-1 text-sm text-gray-600">{product.supplier.rating}</span>
                       </div>
-                      <span className="text-sm text-gray-500 ml-2">•</span>
-                      <span className="text-sm text-gray-500 ml-2">{product.supplier.location}</span>
+                      <span className="ml-2 text-sm text-gray-500">• {product.supplier.name}</span>
                     </div>
-
                     <div className="flex space-x-2">
                       <button
                         onClick={() => addToCart(product, 1)}
                         className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
                       >
-                        {t('vendor.addToCart')}
+                        {t('vendorDashboard.addToCart')}
                       </button>
                       <Link
-                        to={`/vendors/${product.supplier.name}/public`}
+                        to={`/vendors/${encodeURIComponent(product.supplier.name)}/public`}
                         className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center"
                       >
-                        {t('vendor.viewSupplierProfile')}
+                        {t('vendorDashboard.viewSupplierProfile')}
                       </Link>
                     </div>
                   </div>
@@ -731,59 +621,58 @@ const VendorDashboard = () => {
           </div>
         )}
 
-        {/* Performance Tab */}
         {activeTab === 'performance' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('vendor.supplierPerformance')}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {t('vendor.performanceDescription')}
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900">{product.supplier.name}</h4>
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 text-sm">★</span>
-                        <span className="text-sm font-medium text-gray-900 ml-1">{product.supplier.rating}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t('vendor.qualityRating')}:</span>
-                        <span className="font-medium">{product.supplier.quality}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t('vendor.speedRating')}:</span>
-                        <span className="font-medium">{product.supplier.speed}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t('vendor.reliabilityRating')}:</span>
-                        <span className="font-medium">{product.supplier.reliability}</span>
-                      </div>
-                    </div>
-                    
-                    <Link
-                      to={`/vendors/${product.supplier.name}/public`}
-                      className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center block"
-                    >
-                      {t('vendor.viewDetails')}
-                    </Link>
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {t('vendorDashboard.supplierPerformance')}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {t('vendorDashboard.performanceDescription')}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {suppliers.map((supplier) => (
+                <div key={supplier.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-gray-900">{supplier.name}</h4>
+                    <span className="text-sm text-gray-500">{supplier.distance}</span>
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{t('vendorDashboard.qualityRating')}:</span>
+                      <span className="font-medium">{supplier.rating}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{t('vendorDashboard.speedRating')}:</span>
+                      <span className="font-medium">{supplier.rating}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{t('vendorDashboard.reliabilityRating')}:</span>
+                      <span className="font-medium">{supplier.rating}</span>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/vendors/${encodeURIComponent(supplier.name)}/public`}
+                    className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center block"
+                  >
+                    {t('vendorDashboard.viewDetails')}
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         )}
       </main>
-      {/* Remove SupplierProfilePreview and FloatingCheckout components */}
+
+      {/* Floating Cart */}
+      {showCart && (
+        <FloatingCheckout
+          cart={cart}
+          onCheckout={handleCheckout}
+          onRemoveItem={removeFromCart}
+        />
+      )}
     </div>
   );
 };
 
-export default VendorDashboard; 
+export default VendorDashboard;

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
-import { useSupplierStore } from '../stores/useSupplierStore';
-import { useOrderStore } from '../stores/useOrderStore';
-import SupplierHeader from './SupplierHeader';
-import SupplierMap from './SupplierMap';
+import { useSupplierStore } from '../../../stores/useSupplierStore';
+import { useOrderStore } from '../../../stores/useOrderStore';
+import SupplierHeader from '../../common/Header/SupplierHeader';
+import SupplierMap from '../Map/SupplierMap';
+import LoadingSpinner from '../../common/Loading/LoadingSpinner';
 
 const SupplierDashboard = () => {
   const { user } = useAuth();
@@ -240,12 +241,7 @@ const SupplierDashboard = () => {
       <div className="min-h-screen bg-gray-50">
         <SupplierHeader />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading dashboard data...</p>
-            </div>
-          </div>
+          <LoadingSpinner size="lg" text="Loading dashboard data..." />
         </main>
       </div>
     );
@@ -459,7 +455,7 @@ const SupplierDashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-lg font-medium text-gray-900">
-                          {order.vendorName}
+                          Order #{order.id}
                         </h4>
                         <div className="flex items-center space-x-2">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -559,4 +555,4 @@ const SupplierDashboard = () => {
   );
 };
 
-export default SupplierDashboard;
+export default SupplierDashboard; 

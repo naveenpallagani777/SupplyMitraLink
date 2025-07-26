@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SupplierHeader from './SupplierHeader';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../hooks/useAuth';
+import { useSupplierStore } from '../stores/useSupplierStore';
 
 // Fix for default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -22,34 +23,50 @@ const SupplierProfile = () => {
   const [showCart, setShowCart] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showTrackOrder, setShowTrackOrder] = useState(null);
+
+  // Use supplier store
+  const {
+    profile: supplierProfile,
+    loading,
+    error,
+    fetchProfile,
+    updateProfile
+  } = useSupplierStore();
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile(user.id, user.token);
+    }
+  }, [user, fetchProfile]);
+
+  // Initialize edit form with profile data
   const [editForm, setEditForm] = useState({
-    name: 'Fresh Farm Supplies',
-    email: 'supplier@freshfarm.com',
-    phone: '+91 98765 12345',
-    address: 'Farm Road, Bangalore Rural, Karnataka 562123',
-    businessType: 'Agricultural Farm',
-    farmSize: '25 acres',
-    specializations: ['Organic Vegetables', 'Fresh Fruits', 'Dairy Products'],
-    certifications: ['Organic Certified', 'FSSAI Approved', 'ISO 22000']
+    name: supplierProfile?.name || '',
+    email: supplierProfile?.email || '',
+    phone: supplierProfile?.phone || '',
+    address: supplierProfile?.address || '',
+    businessType: supplierProfile?.businessType || '',
+    farmSize: supplierProfile?.farmSize || '',
+    specializations: supplierProfile?.specializations || [],
+    certifications: supplierProfile?.certifications || []
   });
 
-  // Mock supplier profile data
-  const supplierProfile = {
-    name: 'Fresh Farm Supplies',
-    email: 'supplier@freshfarm.com',
-    phone: '+91 98765 12345',
-    address: 'Farm Road, Bangalore Rural, Karnataka 562123',
-    businessType: 'Agricultural Farm',
-    registrationDate: '2022-06-10',
-    totalOrders: 89,
-    totalEarnings: 125000,
-    averageOrderValue: 1404,
-    rating: 4.5,
-    reviews: 67,
-    farmSize: '25 acres',
-    specializations: ['Organic Vegetables', 'Fresh Fruits', 'Dairy Products'],
-    certifications: ['Organic Certified', 'FSSAI Approved', 'ISO 22000']
-  };
+  // Update edit form when profile data loads
+  useEffect(() => {
+    if (supplierProfile) {
+      setEditForm({
+        name: supplierProfile.name || '',
+        email: supplierProfile.email || '',
+        phone: supplierProfile.phone || '',
+        address: supplierProfile.address || '',
+        businessType: supplierProfile.businessType || '',
+        farmSize: supplierProfile.farmSize || '',
+        specializations: supplierProfile.specializations || [],
+        certifications: supplierProfile.certifications || []
+      });
+    }
+  }, [supplierProfile]);
 
   // Mock orders data with updated status workflow
   const [orders, setOrders] = useState([
@@ -139,12 +156,12 @@ const SupplierProfile = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'order-received': return 'Order Received';
-      case 'packed': return 'Packed';
-      case 'in-transit': return 'In Transit';
-      case 'out-for-delivery': return 'Out for Delivery';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
+      case 'order-received': return t('supplierProfile.order.status.received');
+      case 'packed': return t('supplierProfile.order.status.packed');
+      case 'in-transit': return t('supplierProfile.order.status.inTransit');
+      case 'out-for-delivery': return t('supplierProfile.order.status.outForDelivery');
+      case 'delivered': return t('supplierProfile.order.status.delivered');
+      case 'cancelled': return t('supplierProfile.order.status.cancelled');
       default: return status;
     }
   };
@@ -163,9 +180,16 @@ const SupplierProfile = () => {
     setShowEditProfile(true);
   };
 
-  const handleSaveProfile = () => {
-    alert(t('supplier.profileUpdated'));
-    setShowEditProfile(false);
+  const handleSaveProfile = async () => {
+    try {
+      if (user?.id) {
+        await updateProfile(user.id, editForm, user.token);
+        alert(t('supplierProfile.profileUpdated'));
+        setShowEditProfile(false);
+      }
+    } catch (error) {
+      alert('Failed to update profile: ' + error.message);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -206,16 +230,16 @@ const SupplierProfile = () => {
     // Show success message
     switch (action) {
       case 'pack':
-        alert('Order marked as packed!');
+        alert(t('supplierProfile.statusUpdate.packedSuccess'));
         break;
       case 'start-transit':
-        alert('Order marked as in transit!');
+        alert(t('supplierProfile.statusUpdate.transitStarted'));
         break;
       case 'out-delivery':
-        alert('Order marked as out for delivery!');
+        alert(t('supplierProfile.statusUpdate.outForDelivery'));
         break;
       case 'mark-delivered':
-        alert('Order marked as delivered!');
+        alert(t('supplierProfile.statusUpdate.deliveryComplete'));
         break;
       default:
         break;
@@ -224,8 +248,8 @@ const SupplierProfile = () => {
 
   const quickActions = [
     {
-      title: t('supplier.editProfile'),
-      description: t('supplier.updateProfileInfo'),
+      title: t('supplierProfile.editProfile'),
+      description: t('supplierProfile.updateProfileInfo'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -235,8 +259,8 @@ const SupplierProfile = () => {
       color: 'bg-blue-500'
     },
     {
-      title: t('supplier.viewOrders'),
-      description: t('supplier.manageIncomingOrders'),
+      title: t('supplierProfile.viewOrders'),
+      description: t('supplierProfile.manageIncomingOrders'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -246,8 +270,8 @@ const SupplierProfile = () => {
       color: 'bg-purple-500'
     },
     {
-      title: t('common.dashboard'),
-      description: t('supplier.backToDashboard'),
+      title: t('supplierProfile.dashboard'),
+      description: t('supplierProfile.backToDashboard'),
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
@@ -264,6 +288,65 @@ const SupplierProfile = () => {
     return true;
   });
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SupplierHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SupplierHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Profile</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No profile data
+  if (!supplierProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SupplierHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="text-gray-500 text-6xl mb-4">📋</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Profile Data</h2>
+            <p className="text-gray-600 mb-4">Unable to load profile information.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Vendor read-only view
   if (user && user.role === 'vendor') {
     return (
@@ -272,20 +355,20 @@ const SupplierProfile = () => {
         <main className="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              {t('supplier.profile')} 👨‍🌾
+              {t('supplierProfile.profile')} 👨‍🌾
             </h2>
-            <p className="text-gray-600">{t('supplier.supplierInfoForVendor')}</p>
+            <p className="text-gray-600">{t('supplierProfile.supplierInfoForVendor')}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">{supplierProfile.name}</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">{t('supplierProfile.profile')}</h3>
             <p className="text-gray-700 mb-2">{supplierProfile.address}</p>
             <p className="text-gray-700 mb-2">{supplierProfile.phone}</p>
             <p className="text-gray-700 mb-2">{supplierProfile.email}</p>
-            <p className="text-gray-700 mb-2">{t('supplier.businessType')}: {supplierProfile.businessType}</p>
-            <p className="text-gray-700 mb-2">{t('supplier.farmSize')}: {supplierProfile.farmSize}</p>
-            <p className="text-gray-700 mb-2">{t('supplier.specializations')}: {supplierProfile.specializations.join(', ')}</p>
-            <p className="text-gray-700 mb-2">{t('supplier.certifications')}: {supplierProfile.certifications.join(', ')}</p>
-            <p className="text-gray-700 mb-2">{t('supplier.rating')}: {supplierProfile.rating} ⭐</p>
+            <p className="text-gray-700 mb-2">{t('supplierProfile.businessType')}: {supplierProfile.businessType}</p>
+            <p className="text-gray-700 mb-2">{t('supplierProfile.farmSize')}: {supplierProfile.farmSize}</p>
+            <p className="text-gray-700 mb-2">{t('supplierProfile.specializations')}: {supplierProfile.specializations.join(', ')}</p>
+            <p className="text-gray-700 mb-2">{t('supplierProfile.certifications')}: {supplierProfile.certifications.join(', ')}</p>
+            <p className="text-gray-700 mb-2">{t('supplierProfile.rating')}: {supplierProfile.rating} ⭐</p>
           </div>
         </main>
       </div>
@@ -301,10 +384,10 @@ const SupplierProfile = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            {t('supplier.profile')} 👨‍🌾
+            {t('supplierProfile.profile')} 👨‍🌾
           </h2>
           <p className="text-gray-600">
-            {t('supplier.manageProfileOrders')}
+            {t('supplierProfile.manageProfileOrders')}
           </p>
         </div>
 
@@ -319,7 +402,7 @@ const SupplierProfile = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {t('supplier.profile')}
+              {t('supplierProfile.profile')}
             </button>
             <button
               onClick={() => setActiveTab('orders')}
@@ -329,7 +412,7 @@ const SupplierProfile = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {t('supplier.activeOrders')} ({orders.filter(o => o.status !== 'delivered').length})
+              {t('supplierProfile.activeOrders')} ({orders.filter(o => o.status !== 'delivered').length})
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -339,7 +422,7 @@ const SupplierProfile = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {t('supplier.orderHistory')} ({orders.filter(o => o.status === 'delivered').length})
+              {t('supplierProfile.orderHistory')} ({orders.filter(o => o.status === 'delivered').length})
             </button>
           </nav>
         </div>
@@ -350,7 +433,7 @@ const SupplierProfile = () => {
             {/* Quick Actions */}
             <div className="mb-8">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {t('supplier.quickActions')}
+                {t('supplierProfile.quickActions')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {quickActions.map((action, index) => (
@@ -395,7 +478,7 @@ const SupplierProfile = () => {
                     </div>
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplier.totalOrders')}</dt>
+                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplierProfile.totalOrders')}</dt>
                         <dd className="text-xl md:text-2xl font-semibold text-gray-900">{supplierProfile.totalOrders}</dd>
                       </dl>
                     </div>
@@ -415,7 +498,7 @@ const SupplierProfile = () => {
                     </div>
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplier.totalEarnings')}</dt>
+                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplierProfile.totalEarnings')}</dt>
                         <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{supplierProfile.totalEarnings.toLocaleString()}</dd>
                       </dl>
                     </div>
@@ -435,7 +518,7 @@ const SupplierProfile = () => {
                     </div>
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplier.rating')}</dt>
+                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplierProfile.rating')}</dt>
                         <dd className="text-xl md:text-2xl font-semibold text-gray-900">{supplierProfile.rating}</dd>
                       </dl>
                     </div>
@@ -455,7 +538,7 @@ const SupplierProfile = () => {
                     </div>
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplier.avgOrderValue')}</dt>
+                        <dt className="text-sm font-medium text-gray-500 truncate">{t('supplierProfile.avgOrderValue')}</dt>
                         <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{supplierProfile.averageOrderValue}</dd>
                       </dl>
                     </div>
@@ -466,46 +549,46 @@ const SupplierProfile = () => {
 
             {/* Profile Details */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">{t('supplier.profileDetails')}</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-6">{t('supplierProfile.profileDetails')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-4">{t('supplier.personalInfo')}</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-4">{t('supplierProfile.personalInfo')}</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.name')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.name')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.email')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.email')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.email}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.phone')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.phone')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.phone}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.address')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.address')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.address}</p>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-4">{t('supplier.businessInfo')}</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-4">{t('supplierProfile.businessInfo')}</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.businessType')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.businessType')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.businessType}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.farmSize')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.farmSize')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.farmSize}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.registrationDate')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.registrationDate')}</label>
                       <p className="text-sm text-gray-900 mt-1">{supplierProfile.registrationDate}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.specializations')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.specializations')}</label>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {supplierProfile.specializations.map((spec, index) => (
                           <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -515,7 +598,7 @@ const SupplierProfile = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('supplier.certifications')}</label>
+                      <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.certifications')}</label>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {supplierProfile.certifications.map((cert, index) => (
                           <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -532,7 +615,7 @@ const SupplierProfile = () => {
                   onClick={handleEditProfile}
                   className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
                 >
-                  {t('supplier.editProfile')}
+                  {t('supplierProfile.editProfile')}
                 </button>
               </div>
             </div>
@@ -542,10 +625,10 @@ const SupplierProfile = () => {
               <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
                 <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
                   <div className="mt-3">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t('supplier.editProfile')}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t('supplierProfile.editProfile')}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.name')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.name')}</label>
                         <input
                           type="text"
                           value={editForm.name}
@@ -554,7 +637,7 @@ const SupplierProfile = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.email')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.email')}</label>
                         <input
                           type="email"
                           value={editForm.email}
@@ -563,7 +646,7 @@ const SupplierProfile = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.phone')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.phone')}</label>
                         <input
                           type="tel"
                           value={editForm.phone}
@@ -572,7 +655,7 @@ const SupplierProfile = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.address')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.address')}</label>
                         <textarea
                           value={editForm.address}
                           onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
@@ -581,7 +664,7 @@ const SupplierProfile = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.businessType')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.businessType')}</label>
                         <select
                           value={editForm.businessType}
                           onChange={(e) => setEditForm({ ...editForm, businessType: e.target.value })}
@@ -594,7 +677,7 @@ const SupplierProfile = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplier.farmSize')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('supplierProfile.farmSize')}</label>
                         <input
                           type="text"
                           value={editForm.farmSize}
@@ -608,13 +691,13 @@ const SupplierProfile = () => {
                         onClick={handleSaveProfile}
                         className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
                       >
-                        {t('common.save')}
+                        {t('supplierProfile.save')}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors duration-200"
                       >
-                        {t('common.cancel')}
+                        {t('supplierProfile.cancel')}
                       </button>
                     </div>
                   </div>
@@ -629,7 +712,7 @@ const SupplierProfile = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900">
-                {activeTab === 'orders' ? t('supplier.activeOrders') : t('supplier.orderHistory')}
+                {activeTab === 'orders' ? t('supplierProfile.activeOrders') : t('supplierProfile.orderHistory')}
               </h3>
             </div>
             
@@ -650,7 +733,7 @@ const SupplierProfile = () => {
 
                 {/* Order Items */}
                 <div className="mb-4">
-                  <h5 className="text-sm font-medium text-gray-900 mb-2">{t('supplier.orderItems')}</h5>
+                  <h5 className="text-sm font-medium text-gray-900 mb-2">{t('supplierProfile.orderItems')}</h5>
                   <div className="space-y-2">
                     {order.items.map((item, index) => (
                       <div key={index} className="flex justify-between items-center text-sm">
@@ -666,11 +749,11 @@ const SupplierProfile = () => {
                 {/* Order Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('supplier.orderDate')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.orderDate')}</label>
                     <p className="text-sm text-gray-900 mt-1">{order.orderDate}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('supplier.expectedDelivery')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('supplierProfile.expectedDelivery')}</label>
                     <p className="text-sm text-gray-900 mt-1">{order.expectedDelivery}</p>
                   </div>
                 </div>
@@ -682,7 +765,7 @@ const SupplierProfile = () => {
                       onClick={() => handleOrderAction(order.id, 'pack')}
                       className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
                     >
-                      Mark as Packed
+                      {t('supplierProfile.actions.markAsPacked')}
                     </button>
                   )}
                   {order.status === 'packed' && (
@@ -690,7 +773,7 @@ const SupplierProfile = () => {
                       onClick={() => handleOrderAction(order.id, 'start-transit')}
                       className="bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700 transition-colors duration-200"
                     >
-                      Start Transit
+                      {t('supplierProfile.actions.startTransit')}
                     </button>
                   )}
                   {order.status === 'in-transit' && (
@@ -698,7 +781,7 @@ const SupplierProfile = () => {
                       onClick={() => handleOrderAction(order.id, 'out-delivery')}
                       className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
                     >
-                      Out for Delivery
+                      {t('supplierProfile.actions.outForDelivery')}
                     </button>
                   )}
                   {order.status === 'out-for-delivery' && (
@@ -706,7 +789,7 @@ const SupplierProfile = () => {
                       onClick={() => handleOrderAction(order.id, 'mark-delivered')}
                       className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
                     >
-                      Mark as Delivered
+                      {t('supplierProfile.actions.markAsDelivered')}
                     </button>
                   )}
                 </div>
@@ -717,10 +800,10 @@ const SupplierProfile = () => {
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">📦</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {activeTab === 'orders' ? t('supplier.noActiveOrders') : t('supplier.noOrderHistory')}
+                  {activeTab === 'orders' ? t('supplierProfile.noActiveOrders') : t('supplierProfile.noOrderHistory')}
                 </h3>
                 <p className="text-gray-500">
-                  {activeTab === 'orders' ? t('supplier.waitingForOrders') : t('supplier.noCompletedOrders')}
+                  {activeTab === 'orders' ? t('supplierProfile.waitingForOrders') : t('supplierProfile.noCompletedOrders')}
                 </p>
               </div>
             )}
@@ -734,7 +817,7 @@ const SupplierProfile = () => {
               <div className="mt-3">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    {t('supplier.trackOrder')} #{showTrackOrder}
+                    {t('supplierProfile.tracking.trackOrder')} #{showTrackOrder}
                   </h3>
                   <button
                     onClick={handleCloseTrack}
@@ -760,8 +843,9 @@ const SupplierProfile = () => {
                     <Marker position={[12.9716, 77.5946]}>
                       <Popup>
                         <div>
-                          <h4 className="font-medium">Supplier Location</h4>
-                          <p className="text-sm text-gray-600">Fresh Farm Supplies</p>
+                          <h4 className="font-medium">{t('supplierProfile.tracking.supplier')}</h4>
+                          <p className="text-sm text-blue-700">Fresh Farm Supplies</p>
+                          <p className="text-xs text-blue-600">Farm Road, Bangalore Rural</p>
                         </div>
                       </Popup>
                     </Marker>
@@ -769,8 +853,9 @@ const SupplierProfile = () => {
                     <Marker position={[12.9716, 77.5946]}>
                       <Popup>
                         <div>
-                          <h4 className="font-medium">Vendor Location</h4>
-                          <p className="text-sm text-gray-600">Fresh Market Vendor</p>
+                          <h4 className="font-medium">{t('supplierProfile.tracking.vendor')}</h4>
+                          <p className="text-sm text-purple-700">Fresh Market Vendor</p>
+                          <p className="text-xs text-purple-600">123 Market Street, Bangalore</p>
                         </div>
                       </Popup>
                     </Marker>
@@ -788,17 +873,17 @@ const SupplierProfile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900">Supplier</h4>
+                    <h4 className="font-medium text-blue-900">{t('supplierProfile.tracking.supplier')}</h4>
                     <p className="text-sm text-blue-700">Fresh Farm Supplies</p>
                     <p className="text-xs text-blue-600">Farm Road, Bangalore Rural</p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-green-900">Current Status</h4>
-                    <p className="text-sm text-green-700">Confirmed</p>
-                    <p className="text-xs text-green-600">Expected: 2024-01-22</p>
+                    <h4 className="font-medium text-green-900">{t('supplierProfile.tracking.currentStatus')}</h4>
+                    <p className="text-sm text-green-700">{t('supplierProfile.tracking.confirmed')}</p>
+                    <p className="text-xs text-green-600">{t('supplierProfile.order.expected', { date: '2024-01-22' })}</p>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-purple-900">Vendor</h4>
+                    <h4 className="font-medium text-purple-900">{t('supplierProfile.tracking.vendor')}</h4>
                     <p className="text-sm text-purple-700">Fresh Market Vendor</p>
                     <p className="text-xs text-purple-600">123 Market Street, Bangalore</p>
                   </div>
@@ -809,7 +894,7 @@ const SupplierProfile = () => {
                     onClick={handleCloseTrack}
                     className="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors duration-200"
                   >
-                    {t('common.close')}
+                    {t('supplierProfile.close')}
                   </button>
                 </div>
               </div>

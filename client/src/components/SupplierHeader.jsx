@@ -20,7 +20,12 @@ const SupplierHeader = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-4">
+          <button
+            className="flex items-center space-x-4 focus:outline-none"
+            onClick={() => navigate('/dashboard/supplier')}
+            aria-label="Go to Supplier Dashboard"
+            style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
+          >
             <div className="flex-shrink-0">
               <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +39,7 @@ const SupplierHeader = () => {
               </h1>
               <p className="text-xs text-gray-500">{t('brand.tagline')}</p>
             </div>
-          </div>
+          </button>
 
           {/* Navigation */}
                            <nav className="hidden md:flex items-center space-x-8">
@@ -48,7 +53,7 @@ const SupplierHeader = () => {
                      to="/profile/supplier"
                      className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                    >
-                     {t('supplier.profile')}
+                     {t('supplierProfile.profile')}
                    </Link>
                    <Link
                      to="/supplier/items"
@@ -129,7 +134,7 @@ const SupplierHeader = () => {
                      to="/profile/supplier"
                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
                    >
-                     {t('supplier.profile')}
+                     {t('supplierProfile.profile')}
                    </Link>
                    <Link
                      to="/supplier/items"

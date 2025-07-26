@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -22,6 +23,7 @@ const createCustomIcon = (color) => {
 };
 
 const VendorMap = ({ products = [] }) => {
+  const navigate = useNavigate();
   // Default center (can be set to vendor's location)
   const vendorLocation = [12.9716, 77.5946]; // Bangalore as default
 
@@ -162,7 +164,10 @@ const VendorMap = ({ products = [] }) => {
                     </div>
 
                     {/* Action Button */}
-                    <button className="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-sm">
+                    <button
+                      onClick={() => navigate(`/vendors/${encodeURIComponent(supplier.name)}/public`)}
+                      className="w-full bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition-colors text-sm"
+                    >
                       View All Products
                     </button>
                   </div>

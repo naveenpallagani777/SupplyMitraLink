@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import SupplierHeader from './SupplierHeader';
+import { useSupplierStore } from '../stores/useSupplierStore';
 
 const SupplierItems = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [items, setItems] = useState([
-    { id: 1, name: 'Fresh Tomatoes', price: 40, quantity: 50, unit: 'kg', category: 'Vegetables' },
-    { id: 2, name: 'Onions', price: 25, quantity: 100, unit: 'kg', category: 'Vegetables' },
-    { id: 3, name: 'Potatoes', price: 30, quantity: 75, unit: 'kg', category: 'Vegetables' },
-    { id: 4, name: 'Bananas', price: 60, quantity: 25, unit: 'dozen', category: 'Fruits' },
-  ]);
+  
+  // Use supplier store
+  const {
+    inventory: items,
+    loading,
+    error,
+    fetchInventory,
+    addInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem
+  } = useSupplierStore();
+
+  // Fetch inventory data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchInventory(user.id, user.token);
+    }
+  }, [user, fetchInventory]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -23,17 +36,22 @@ const SupplierItems = () => {
     category: 'Vegetables'
   });
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (formData.name && formData.price && formData.quantity) {
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity)
-      };
-      setItems([...items, newItem]);
-      setFormData({ name: '', price: '', quantity: '', unit: 'kg', category: 'Vegetables' });
-      setShowAddForm(false);
+      try {
+        const newItem = {
+          name: formData.name,
+          price: parseFloat(formData.price),
+          quantity: parseInt(formData.quantity),
+          unit: formData.unit,
+          category: formData.category
+        };
+        await addInventoryItem(user.id, newItem, user.token);
+        setFormData({ name: '', price: '', quantity: '', unit: 'kg', category: 'Vegetables' });
+        setShowAddForm(false);
+      } catch (error) {
+        alert('Failed to add item: ' + error.message);
+      }
     }
   };
 
@@ -49,30 +67,33 @@ const SupplierItems = () => {
     setShowAddForm(true);
   };
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = async () => {
     if (formData.name && formData.price && formData.quantity) {
-      const updatedItems = items.map(item =>
-        item.id === editingItem.id
-          ? {
-              ...item,
-              name: formData.name,
-              price: parseFloat(formData.price),
-              quantity: parseInt(formData.quantity),
-              unit: formData.unit,
-              category: formData.category
-            }
-          : item
-      );
-      setItems(updatedItems);
-      setFormData({ name: '', price: '', quantity: '', unit: 'kg', category: 'Vegetables' });
-      setEditingItem(null);
-      setShowAddForm(false);
+      try {
+        const updatedItem = {
+          name: formData.name,
+          price: parseFloat(formData.price),
+          quantity: parseInt(formData.quantity),
+          unit: formData.unit,
+          category: formData.category
+        };
+        await updateInventoryItem(user.id, editingItem.id, updatedItem, user.token);
+        setFormData({ name: '', price: '', quantity: '', unit: 'kg', category: 'Vegetables' });
+        setEditingItem(null);
+        setShowAddForm(false);
+      } catch (error) {
+        alert('Failed to update item: ' + error.message);
+      }
     }
   };
 
-  const handleDeleteItem = (id) => {
+  const handleDeleteItem = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      setItems(items.filter(item => item.id !== id));
+      try {
+        await deleteInventoryItem(user.id, id, user.token);
+      } catch (error) {
+        alert('Failed to delete item: ' + error.message);
+      }
     }
   };
 

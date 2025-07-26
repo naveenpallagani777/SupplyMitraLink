@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import VendorHeader from './VendorHeader';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
+import { useAuth } from '../hooks/useAuth';
+import { useVendorStore } from '../stores/useVendorStore';
 
 // Fix for default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -15,37 +17,53 @@ L.Icon.Default.mergeOptions({
 
 const VendorProfile = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [cart] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showTrackOrder, setShowTrackOrder] = useState(null);
-  const [editForm, setEditForm] = useState({
-    name: 'Fresh Market Vendor',
-    email: 'vendor@freshmarket.com',
-    phone: '+91 98765 43210',
-    address: '123 Market Street, Bangalore, Karnataka 560001',
-    businessType: 'Restaurant'
-  });
   const [showReviewForm, setShowReviewForm] = useState(null); // orderId or null
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [reviews, setReviews] = useState([]); // {orderId, supplier, rating, comment}
 
-  // Mock vendor profile data
-  const vendorProfile = {
-    name: 'Fresh Market Vendor',
-    email: 'vendor@freshmarket.com',
-    phone: '+91 98765 43210',
-    address: '123 Market Street, Bangalore, Karnataka 560001',
-    businessType: 'Restaurant',
-    registrationDate: '2023-01-15',
-    totalOrders: 156,
-    totalSpent: 45000,
-    averageOrderValue: 288,
-    preferredCategories: ['Vegetables', 'Fruits', 'Dairy', 'Grains'],
-    rating: 4.8,
-    reviews: 23
-  };
+  // Use vendor store
+  const {
+    profile: vendorProfile,
+    loading,
+    error,
+    fetchProfile,
+    updateProfile
+  } = useVendorStore();
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile(user.id, user.token);
+    }
+  }, [user, fetchProfile]);
+
+  // Initialize edit form with profile data
+  const [editForm, setEditForm] = useState({
+    name: vendorProfile?.name || '',
+    email: vendorProfile?.email || '',
+    phone: vendorProfile?.phone || '',
+    address: vendorProfile?.address || '',
+    businessType: vendorProfile?.businessType || ''
+  });
+
+  // Update edit form when profile data loads
+  useEffect(() => {
+    if (vendorProfile) {
+      setEditForm({
+        name: vendorProfile.name || '',
+        email: vendorProfile.email || '',
+        phone: vendorProfile.phone || '',
+        address: vendorProfile.address || '',
+        businessType: vendorProfile.businessType || ''
+      });
+    }
+  }, [vendorProfile]);
 
   // Mock orders data with tracking coordinates
   const orders = [
@@ -167,19 +185,25 @@ const VendorProfile = () => {
 
   const handleEditProfile = () => {
     setEditForm({
-      name: vendorProfile.name,
-      email: vendorProfile.email,
-      phone: vendorProfile.phone,
-      address: vendorProfile.address,
-      businessType: vendorProfile.businessType
+      name: vendorProfile?.name || '',
+      email: vendorProfile?.email || '',
+      phone: vendorProfile?.phone || '',
+      address: vendorProfile?.address || '',
+      businessType: vendorProfile?.businessType || ''
     });
     setShowEditProfile(true);
   };
 
-  const handleSaveProfile = () => {
-    // In a real app, this would update the backend
-    alert('Profile updated successfully!');
-    setShowEditProfile(false);
+  const handleSaveProfile = async () => {
+    try {
+      if (user?.id) {
+        await updateProfile(user.id, editForm, user.token);
+        alert('Profile updated successfully!');
+        setShowEditProfile(false);
+      }
+    } catch (error) {
+      alert('Failed to update profile: ' + error.message);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -246,6 +270,65 @@ const VendorProfile = () => {
     if (activeTab === 'history') return order.status === 'delivered';
     return true;
   });
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <VendorHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <VendorHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Profile</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No profile data
+  if (!vendorProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <VendorHeader cart={cart} showCart={showCart} setShowCart={setShowCart} />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="text-gray-500 text-6xl mb-4">📋</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Profile Data</h2>
+            <p className="text-gray-600 mb-4">Unable to load profile information.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -351,7 +434,7 @@ const VendorProfile = () => {
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">{t('vendor.totalOrders')}</dt>
-                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">{vendorProfile.totalOrders}</dd>
+                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">{vendorProfile?.totalOrders || 0}</dd>
                       </dl>
                     </div>
                   </div>
@@ -371,7 +454,7 @@ const VendorProfile = () => {
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">{t('vendor.totalSpent')}</dt>
-                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{vendorProfile.totalSpent.toLocaleString()}</dd>
+                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{(vendorProfile?.totalSpent || 0).toLocaleString()}</dd>
                       </dl>
                     </div>
                   </div>
@@ -391,7 +474,7 @@ const VendorProfile = () => {
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">{t('vendor.rating')}</dt>
-                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">{vendorProfile.rating}</dd>
+                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">{vendorProfile?.rating || 0}</dd>
                       </dl>
                     </div>
                   </div>
@@ -411,7 +494,7 @@ const VendorProfile = () => {
                     <div className="ml-3 md:ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">{t('vendor.avgOrderValue')}</dt>
-                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{vendorProfile.averageOrderValue}</dd>
+                        <dd className="text-xl md:text-2xl font-semibold text-gray-900">₹{vendorProfile?.averageOrderValue || 0}</dd>
                       </dl>
                     </div>
                   </div>
@@ -436,19 +519,19 @@ const VendorProfile = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.name')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.name}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.name || ''}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.email')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.email}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.email || ''}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.phone')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.phone}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.phone || ''}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.address')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.address}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.address || ''}</p>
                     </div>
                   </div>
                 </div>
@@ -457,16 +540,16 @@ const VendorProfile = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.businessType')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.businessType}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.businessType || ''}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.registrationDate')}</label>
-                      <p className="text-sm text-gray-900 mt-1">{vendorProfile.registrationDate}</p>
+                      <p className="text-sm text-gray-900 mt-1">{vendorProfile?.registrationDate || ''}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('vendor.preferredCategories')}</label>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {vendorProfile.preferredCategories.map((category, index) => (
+                        {(vendorProfile?.preferredCategories || []).map((category, index) => (
                           <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             {category}
                           </span>
