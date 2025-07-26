@@ -1,21 +1,26 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthProvider";
-import ProtectedRoute from "./components/ProtectedRoute";
-import PublicRoute from "./components/PublicRoute";
-import ScrollToTop from "./components/ScrollToTop";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import SupplierDashboard from "./components/SupplierDashboard";
-import VendorDashboard from "./components/VendorDashboard";
-import SupplierItems from "./components/SupplierItems";
-import PriceWarnings from "./components/PriceWarnings";
-import Feedback from "./components/Feedback";
-import Checkout from "./components/Checkout";
-import OrderConfirmation from "./components/OrderConfirmation";
-import SupplierProfile from "./components/SupplierProfile";
-import VendorProfile from "./components/VendorProfile";
-import SupplierPublicView from "./components/SupplierPublicView";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import PublicRoute from "./components/common/PublicRoute";
+import ScrollToTop from "./components/common/ScrollToTop";
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/Signup";
+import SupplierDashboard from "./components/supplier/SupplierDashboard";
+import VendorDashboard from "./components/vendor/VendorDashboard";
+import SupplierItems from "./components/supplier/SupplierItems";
+import PriceWarnings from "./components/supplier/PriceWarnings";
+import Feedback from "./components/feedback/Feedback";
+import Checkout from "./components/orders/Checkout";
+import OrderConfirmation from "./components/orders/OrderConfirmation";
+import SupplierProfile from "./components/supplier/SupplierProfile";
+import VendorProfile from "./components/vendor/VendorProfile";
+import SupplierPublicView from "./components/vendor/SupplierPublicView";
 import "./i18n";
 
 export default function App() {
@@ -25,17 +30,23 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } />
-          <Route path="/signup" element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          } />
-          
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
+
           {/* Protected Routes */}
           <Route
             path="/dashboard/supplier"
@@ -125,7 +136,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          
+
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

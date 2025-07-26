@@ -1,6 +1,6 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -15,11 +15,12 @@ const PublicRoute = ({ children }) => {
 
   if (user) {
     // Redirect to appropriate dashboard based on user role
-    const dashboardPath = user.role === 'supplier' ? '/dashboard/supplier' : '/dashboard/vendor';
+    const dashboardPath =
+      user.role === "supplier" ? "/dashboard/supplier" : "/dashboard/vendor";
     return <Navigate to={dashboardPath} replace />;
   }
 
   return children;
 };
 
-export default PublicRoute; 
+export default PublicRoute;
