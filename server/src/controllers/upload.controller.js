@@ -59,15 +59,23 @@ exports.resizeMultipleImages = async (req, res, next) => {
 
 // === 5. Final Controllers to Send Response ===
 exports.handleSingleUpload = (req, res) => {
+    const fileUrl = `${req.protocol}://${req.get('host')}/public/img/uploads/${req.file.filename}`;
+
     res.status(200).json({
         status: 'success',
-        file: req.file.filename,
+        file: fileUrl,
     });
 };
 
+
 exports.handleMultipleUpload = (req, res) => {
+    const fileUrls = req.body.images.map(filename => {
+        return `${req.protocol}://${req.get('host')}/public/img/uploads/${filename}`;
+    });
+
     res.status(200).json({
         status: 'success',
-        files: req.body.images,
+        files: fileUrls,
     });
 };
+
