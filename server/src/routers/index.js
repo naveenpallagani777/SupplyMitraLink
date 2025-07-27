@@ -7,6 +7,7 @@ const userRouter = require('./user.router');
 const authRouter = require('./auth.router');
 const addressRouter = require('./address.router');
 const orderRouter = require('./order.router');
+const uploadRouter = require('./upload.routes');
 const { protect } = require('../middlewares/auth.middleware');
 
 routes.use('/auth', authRouter);
@@ -18,5 +19,6 @@ routes.use('/review', reviewRouter);
 routes.use('/user', userRouter);
 routes.use('/address', addressRouter);
 routes.use('/order', orderRouter);
+routes.use('/upload', uploadRouter);
 
 module.exports = routes;

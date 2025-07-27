@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 dotenv.config();
 const app = express();
 
@@ -13,6 +14,7 @@ const routes = require('./routers');
 
 app.use(cors());
 app.use(express.json());
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI)
