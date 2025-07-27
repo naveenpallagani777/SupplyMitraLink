@@ -7,7 +7,7 @@ class APIFeatures {
 
     filter() {
         const queryObj = { ...this.queryString };
-        const excludedFields = ['page', 'sort', 'limit', 'fields'];
+        const excludedFields = ['page', 'sort', 'limit', 'fields', 'max', 'min', 'search', 'lat', 'lng'];
         excludedFields.forEach((el) => delete queryObj[el]);
 
         let queryStr = JSON.stringify(queryObj);
@@ -26,7 +26,6 @@ class APIFeatures {
         }
         return this;
     }
-
 
     limitFields() {
         if (this.queryString.fields) {

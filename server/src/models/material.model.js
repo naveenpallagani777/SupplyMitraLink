@@ -29,6 +29,11 @@ const MaterialSchema = new mongoose.Schema({
 		enum: ['kg', 'g', 'litre', 'ml', 'piece'],
 		default: 'kg',
 	},
+	category: {
+		type: String,
+		enum: ['Vegetables', 'Fruits', 'Dairy', 'Grains', 'Others'],
+		default: 'Vegetables',
+	},
 });
 
 const Material = mongoose.model('Material', MaterialSchema);
