@@ -22,7 +22,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     if (existingUser) {
         return next(new APPError('User already exists', 400));
     }
-    const user = await User.create({ email, password, role });
+    const user = await User.create(req.body);
 
     if (!user) {
         return next(new APPError('User creation failed', 500));

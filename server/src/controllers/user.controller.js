@@ -11,6 +11,9 @@ exports.updateUserProfile = (req, res, next) => {
     if (!req.body.password) {
         delete req.body.password;
     }
+    if (!req.body.role) {
+        delete req.body.role;
+    }
     return updateOneByFilter(User, req => ({
         _id: req.user.id
     }))(req, res, next);
