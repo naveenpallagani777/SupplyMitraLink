@@ -21,6 +21,7 @@ import OrderConfirmation from "./components/orders/OrderConfirmation";
 import SupplierProfile from "./components/supplier/SupplierProfile";
 import VendorProfile from "./components/vendor/VendorProfile";
 import SupplierPublicView from "./components/vendor/SupplierPublicView";
+import PredictionPage from "./pages/PredictionPage";
 import "./i18n";
 
 export default function App() {
@@ -133,6 +134,14 @@ export default function App() {
             element={
               <ProtectedRoute role="supplier">
                 <SupplierProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/prediction"
+            element={
+              <ProtectedRoute role="vendor">
+                <PredictionPage />
               </ProtectedRoute>
             }
           />

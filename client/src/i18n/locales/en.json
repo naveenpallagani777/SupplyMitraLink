@@ -435,5 +435,11 @@
       "confirmed": "Confirmed"
     },
     "close": "Close"
-  }
+  },
+  "stockPredictor": "Stock Predictor",
+  "orderNow": "Order Now",
+  "newPrediction": "New Prediction",
+  "savedPrediction": "Saved prediction loaded",
+  "predictionComplete": "Prediction Complete",
+  "predictionReady": "Your AI-powered stock prediction is ready!"
 } 

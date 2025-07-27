@@ -36,7 +36,7 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
             }}
           >
             {/* <div className="flex-shrink-0">
-              <div className="h-8 w-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-gradient-to-r from-blue-400 to-blue-800 rounded-lg flex items-center justify-center">
                 <svg
                   className="h-5 w-5 text-white"
                   fill="none"
@@ -53,7 +53,7 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-800 bg-clip-text text-transparent">
                 {t("brand.name")}
               </h1>
               <p className="text-xs text-gray-500">{t("brand.tagline")}</p>
@@ -80,6 +80,30 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
             >
               {t("common.feedback")}
+            </Link>
+            <Link
+              to="/prediction"
+              className="relative text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 group"
+            >
+              <div className="flex items-center gap-2">
+                <span>{t("stockPredictor")}</span>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-blue-400 to-blue-800 text-white text-xs font-bold rounded-full animate-pulse">
+                    <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
+                    <span>AI</span>
+                  </div>
+                  {/* <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs font-bold rounded-full">
+                    <div className="w-1 h-1 bg-white rounded-full animate-bounce"></div>
+                    <span>LIVE</span>
+                  </div> */}
+                </div>
+              </div>
+              {/* Floating NEW badge */}
+              {/* <div className="absolute -top-1 -right-1 transform rotate-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-bounce">
+                  NEW
+                </div>
+              </div> */}
             </Link>
           </nav>
 
@@ -186,7 +210,7 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <div className="h-8 w-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-gradient-to-r from-blue-400 to-blue-800 rounded-full flex items-center justify-center">
                   <span className="text-white font-medium text-sm">
                     {user?.name?.charAt(0) || user?.email?.charAt(0) || "V"}
                   </span>
@@ -268,6 +292,23 @@ const VendorHeader = ({ cart, showCart, setShowCart }) => {
               className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
             >
               {t("common.feedback")}
+            </Link>
+            <Link
+              to="/prediction"
+              className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
+            >
+              <div className="flex items-center justify-between">
+                <span>{t("stockPredictor")}</span>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-blue-400 to-blue-800 text-white text-xs font-bold rounded-full animate-pulse">
+                    <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
+                    <span>AI</span>
+                  </div>
+                  <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-bounce">
+                    NEW
+                  </div>
+                </div>
+              </div>
             </Link>
           </div>
         </div>
