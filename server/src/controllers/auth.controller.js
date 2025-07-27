@@ -48,9 +48,9 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     if (!email || !password) {
-        return next(new APPError('Email, password and role are required', 400));
+        return next(new APPError('Email and password  are required', 400));
     }
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
